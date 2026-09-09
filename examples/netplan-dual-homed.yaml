@@ -1,0 +1,67 @@
+# A dual-homed host with source-based routing.
+#
+# Install as the ONLY file in /etc/netplan (mode 0600), then:
+#
+#   netplan generate     # validate and render systemd-networkd units, without applying
+#   netplan apply        # or reboot, if you are working over one of these interfaces
+#
+# Each interface declares its default route twice on purpose:
+#   - in the main table with a metric, deciding where traffic this host INITIATES goes;
+#   - in a private table, deciding how REPLIES from that address get out.
+#
+# Without the second one, replies from ens36 would follow the lowest-metric default
+# route (ens33) and never reach a client outside the local subnet.
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+
+    # Service network. Lower metric, so it carries this host's outbound traffic.
+    ens33:
+      # match/set-name pins the interface name to the NIC, so it survives a PCI
+      # reorder after adding hardware. Omit both if you do not need the guarantee.
+      match:
+        macaddress: "00:0c:29:00:00:01"
+      set-name: "ens33"
+      dhcp4: false
+      dhcp6: false
+      accept-ra: false
+      addresses: ["192.168.5.224/24"]
+      routes:
+        - {to: "default", via: "192.168.5.2", metric: 100}
+        - {to: "default", via: "192.168.5.2", table: 100}
+        # A private table starts empty: without this the table can reach the
+        # gateway but not the directly connected subnet.
+        - {to: "192.168.5.0/24", scope: "link", table: 100}
+      routing-policy:
+        - {from: "192.168.5.224", table: 100}
+      nameservers:
+        addresses: [192.168.5.3, 8.8.8.8]
+
+    # Management network. Higher metric, but replies from its address still leave
+    # through it — that is what table 101 and the matching rule guarantee, and what
+    # makes an inbound port forward to 192.168.1.224 work.
+    ens36:
+      dhcp4: false
+      dhcp6: false
+      accept-ra: false
+      addresses: ["192.168.1.224/24"]
+      routes:
+        - {to: "default", via: "192.168.1.1", metric: 200}
+        - {to: "default", via: "192.168.1.1", table: 101}
+        - {to: "192.168.1.0/24", scope: "link", table: 101}
+      routing-policy:
+        - {from: "192.168.1.224", table: 101}
+      nameservers:
+        addresses: [192.168.1.1, 8.8.8.8]
+
+# Verify after applying — the interface named on the left must match the one on the right:
+#
+#   ip route get 8.8.8.8 from 192.168.1.224
+#   8.8.8.8 from 192.168.1.224 via 192.168.1.1 dev ens36 table 101
+#
+# dhcp4/dhcp6/accept-ra are false on both interfaces so no DHCP server on either
+# network can add a third default route. That does not stop the initramfs default
+# (/run/systemd/network/zzzz-dracut-default.network), which matches every physical
+# interface — see README.md.
