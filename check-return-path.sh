@@ -30,7 +30,6 @@ shift $((OPTIND - 1))
 
 command -v ip >/dev/null || { echo "this script needs iproute2" >&2; exit 1; }
 
-# address -> owning interface, skipping loopback and virtual overlay devices
 declare -a ADDRS IFACES
 if [ $# -gt 0 ]; then
     for a in "$@"; do
