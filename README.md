@@ -233,7 +233,7 @@ the second.
 
 | Check | Result |
 |---|---|
-| `bash -n` and `shellcheck` on `check-return-path.sh` | no errors (one style note, SC2001, on a `sed` call) |
+| `bash -n` and `shellcheck` on `check-return-path.sh` | clean (one SC2001 style note is suppressed with a comment) |
 | Script in an Ubuntu 22.04 container with one interface | `ok`, exit code 0 |
 | Script with an address the host does not have | `NO ROUTE`, exit code 1 |
 | GitHub Actions (`ci`) | repeats the checks above on an Ubuntu runner |

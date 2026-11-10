@@ -84,6 +84,7 @@ ip route show default | sed 's/^/  /'
 rules=$(ip rule show | grep -v '^\(0\|32766\|32767\):' || true)
 echo "source routing rules:"
 if [ -n "$rules" ]; then
+    # shellcheck disable=SC2001  # prefixing every line is clearer with sed than with ${var//}
     sed 's/^/  /' <<<"$rules"
 else
     echo "  none — every reply follows the lowest-metric default route"
