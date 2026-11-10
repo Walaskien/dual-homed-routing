@@ -3,7 +3,7 @@
 [![ci](https://github.com/Walaskien/dual-homed-routing/actions/workflows/ci.yml/badge.svg)](https://github.com/Walaskien/dual-homed-routing/actions/workflows/ci.yml)
 
 A host with two network interfaces replies through whichever default route has the lowest
-metric — **not** through the interface the request arrived on. When those differ, the reply
+metric, **not** through the interface the request arrived on. When those differ, the reply
 leaves through a gateway that knows nothing about the connection, and the TCP handshake
 never completes.
 
@@ -16,7 +16,7 @@ a working `netplan` configuration that fixes it.
 
 ## The symptom
 
-A dual-homed server — one interface on the network its workloads use, one on the network the
+A dual-homed server, one interface on the network its workloads use, one on the network the
 administrators reach it from:
 
 ```
@@ -25,7 +25,7 @@ ens36   192.168.1.224/24    management network,  gateway 192.168.1.1
 ```
 
 A router forwards `203.0.113.10:47852` to `192.168.1.224:22`. From a workstation on
-`192.168.1.0/24` the node answers instantly. Through the forward, the connection hangs —
+`192.168.1.0/24` the node answers instantly. Through the forward, the connection hangs,
 not refused, not reset, just silence until the client times out.
 
 Everything the symptom points at is innocent:
@@ -42,7 +42,7 @@ Chain PREROUTING (policy ACCEPT)       # no NAT rules interfering
 ```
 
 A packet capture is the first real clue: the SYN arrives, `sshd` answers, and the SYN-ACK is
-never seen by the client. The reply is being sent — just not where anyone can use it.
+never seen by the client. The reply is being sent, just not where anyone can use it.
 
 ## The part that surprises people
 
@@ -58,7 +58,7 @@ default via 192.168.1.1 dev ens36 metric 20100
 ```
 
 Only the lowest metric is ever consulted, so every reply that is not link-local leaves via
-`192.168.5.2` on `ens33` — including replies from the management address on `ens36`. The
+`192.168.5.2` on `ens33`, including replies from the management address on `ens36`. The
 external client's SYN lands on `ens36`, and the SYN-ACK goes out the other interface to a
 gateway with no state for that flow.
 
@@ -75,7 +75,7 @@ net.ipv4.conf.all.rp_filter = 2        # loose mode: accepts asymmetric returns
 ```
 
 In strict mode (`1`) the kernel would drop the *inbound* packets instead, producing the same
-silence for a completely different reason. Worth checking, quick to eliminate — and in this
+silence for a completely different reason. Worth checking, quick to eliminate, and in this
 case not the cause.
 
 ## Confirming it in one command
@@ -111,8 +111,8 @@ default routes:
   default via 192.168.5.2 dev ens33 proto static metric 101
   default via 192.168.1.1 dev ens36 proto static metric 20100
 source routing rules:
-  none — every reply follows the lowest-metric default route
-rp_filter: 2 (loose) — asymmetric returns are accepted
+  none, every reply follows the lowest-metric default route
+rp_filter: 2 (loose), asymmetric returns are accepted
 
 1 address(es) would reply through a foreign interface.
 ```
@@ -124,7 +124,7 @@ below, the same host reports both interfaces `ok` and exits `0`.
 
 A host with two upstreams has to route by **source**, not only by destination. Each interface
 gets a private routing table plus a rule directing traffic from that interface's address into
-it. `netplan` expresses this directly — the full file is in
+it. `netplan` expresses this directly, the full file is in
 [`examples/netplan-dual-homed.yaml`](examples/netplan-dual-homed.yaml):
 
 ```yaml
@@ -141,9 +141,9 @@ it. `netplan` expresses this directly — the full file is in
 
 Each interface declares its default route **twice, on purpose**:
 
-- once in the main table with a metric — this decides where traffic the node *initiates*
+- once in the main table with a metric, this decides where traffic the node *initiates*
   goes, and the lower metric wins;
-- once in a private table — this decides how *replies from that address* get out, regardless
+- once in a private table, this decides how *replies from that address* get out, regardless
   of what the main table prefers.
 
 The `scope: link` entry is easy to omit and breaks the table subtly: a private table starts
@@ -215,7 +215,7 @@ Two details worth keeping:
 - **`dhcp4: false` alone is not enough.** It governs the interfaces netplan manages; the
   dracut default is what claims the ones it does not. Overriding it works because
   `/etc/systemd/network` takes precedence over `/run/systemd/network` for a file of the same
-  name — the standard way to suppress a unit file you do not own, without touching the
+  name, the standard way to suppress a unit file you do not own, without touching the
   initramfs.
 
 ## Why it is worth writing down
@@ -253,4 +253,4 @@ Not verified: the netplan example on a real dual-homed host (`netplan generate` 
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

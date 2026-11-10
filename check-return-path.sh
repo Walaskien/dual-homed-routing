@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Report, for every local IPv4 address, which interface a reply from that address
-# would leave through — and flag the ones that would leave through a foreign one.
+# would leave through, and flag the ones that would leave through a foreign one.
 #
 # An address whose replies exit via a different interface than the one holding it
 # is asymmetrically routed: inbound connections to it from outside its own subnet
@@ -87,13 +87,13 @@ if [ -n "$rules" ]; then
     # shellcheck disable=SC2001  # prefixing every line is clearer with sed than with ${var//}
     sed 's/^/  /' <<<"$rules"
 else
-    echo "  none — every reply follows the lowest-metric default route"
+    echo "  none, every reply follows the lowest-metric default route"
 fi
 
 rp=$(sysctl -n net.ipv4.conf.all.rp_filter 2>/dev/null || echo "?")
 case $rp in
-    1) echo "rp_filter: 1 (strict) — inbound packets on asymmetric paths are dropped" ;;
-    2) echo "rp_filter: 2 (loose) — asymmetric returns are accepted" ;;
+    1) echo "rp_filter: 1 (strict), inbound packets on asymmetric paths are dropped" ;;
+    2) echo "rp_filter: 2 (loose), asymmetric returns are accepted" ;;
     0) echo "rp_filter: 0 (off)" ;;
     *) echo "rp_filter: unknown" ;;
 esac
@@ -101,6 +101,6 @@ esac
 if [ "$problems" -gt 0 ]; then
     echo
     echo "$problems address(es) would reply through a foreign interface."
-    echo "Fix with a routing table per interface — see README.md."
+    echo "Fix with a routing table per interface, see README.md."
     exit 1
 fi

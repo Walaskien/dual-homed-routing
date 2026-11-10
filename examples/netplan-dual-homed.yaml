@@ -40,7 +40,7 @@ network:
         addresses: [192.168.5.3, 8.8.8.8]
 
     # Management network. Higher metric, but replies from its address still leave
-    # through it — that is what table 101 and the matching rule guarantee, and what
+    # through it, that is what table 101 and the matching rule guarantee, and what
     # makes an inbound port forward to 192.168.1.224 work.
     ens36:
       dhcp4: false
@@ -56,7 +56,7 @@ network:
       nameservers:
         addresses: [192.168.1.1, 8.8.8.8]
 
-# Verify after applying — the interface named on the left must match the one on the right:
+# Verify after applying, the interface named on the left must match the one on the right:
 #
 #   ip route get 8.8.8.8 from 192.168.1.224
 #   8.8.8.8 from 192.168.1.224 via 192.168.1.1 dev ens36 table 101
@@ -64,4 +64,4 @@ network:
 # dhcp4/dhcp6/accept-ra are false on both interfaces so no DHCP server on either
 # network can add a third default route. That does not stop the initramfs default
 # (/run/systemd/network/zzzz-dracut-default.network), which matches every physical
-# interface — see README.md.
+# interface, see README.md.
