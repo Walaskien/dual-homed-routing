@@ -1,0 +1,14 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash -n check-return-path.sh
+      - run: shellcheck check-return-path.sh
+      - name: Script runs on a single-interface host and finds no asymmetry
+        run: ./check-return-path.sh
+      - name: Script reports an address that has no route
+        run: |
+          if ./check-return-path.sh 10.99.99.99; then echo "expected a non-zero exit"; exit 1; fi

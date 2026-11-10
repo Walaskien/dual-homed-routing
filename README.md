@@ -1,5 +1,7 @@
 # Why SSH works from the LAN but not through the port forward
 
+[![ci](https://github.com/Walaskien/dual-homed-routing/actions/workflows/ci.yml/badge.svg)](https://github.com/Walaskien/dual-homed-routing/actions/workflows/ci.yml)
+
 A host with two network interfaces replies through whichever default route has the lowest
 metric — **not** through the interface the request arrived on. When those differ, the reply
 leaves through a gateway that knows nothing about the connection, and the TCP handshake
@@ -226,6 +228,28 @@ configuration, when the static configuration is fine and something else is overw
 Neither is exotic. Any host with a management interface and a service interface can land in
 the first one, and any Ubuntu host installed with both network managers active can land in
 the second.
+
+## Verified
+
+| Check | Result |
+|---|---|
+| `bash -n` and `shellcheck` on `check-return-path.sh` | no errors (one style note, SC2001, on a `sed` call) |
+| Script in an Ubuntu 22.04 container with one interface | `ok`, exit code 0 |
+| Script with an address the host does not have | `NO ROUTE`, exit code 1 |
+| GitHub Actions (`ci`) | repeats the checks above on an Ubuntu runner |
+
+Not verified: the netplan example on a real dual-homed host (`netplan generate` was not run), and the port-forward scenario end to end. The script cannot show a real asymmetric case on a single-interface machine.
+
+## Limitations
+
+- The script reports where replies would leave according to the routing tables (`ip route get ... from ...`). It does not send packets.
+- IPv4 only. Interfaces such as tunnels, bridges to containers and overlays are skipped on purpose.
+- Netplan and `systemd-networkd` only; other network managers need the same idea written in their own syntax.
+
+## Related
+
+- [single-node-k8s-platform](https://github.com/Walaskien/single-node-k8s-platform): a single-node cluster whose node has two interfaces (see `docs/dual-homed-node.md`).
+- [mikrotik-site-to-site](https://github.com/Walaskien/mikrotik-site-to-site): pins tunnel endpoints to their own WAN to avoid the same asymmetry on routers.
 
 ## License
 
