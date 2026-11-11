@@ -4,7 +4,7 @@ jobs:
   script:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: bash -n check-return-path.sh
       - run: shellcheck check-return-path.sh
       - name: Script runs on a single-interface host and finds no asymmetry
