@@ -2,8 +2,8 @@
 #
 # Install as the ONLY file in /etc/netplan (mode 0600), then:
 #
-#   netplan generate     # validate and render systemd-networkd units, without applying
-#   netplan apply        # or reboot, if you are working over one of these interfaces
+#   netplan generate     # render systemd-networkd units, reports syntax errors only
+#   netplan try          # apply, and roll back unless confirmed (safe over SSH)
 #
 # Each interface declares its default route twice on purpose:
 #   - in the main table with a metric, deciding where traffic this host INITIATES goes;

@@ -11,8 +11,9 @@ The result is a failure with a distinctive shape: the service is reachable from 
 own subnet and silently unreachable from anywhere else. Nothing is listening on the wrong
 address, and no firewall is dropping anything.
 
-This repository explains the failure mode, shows how to confirm it in one command, and gives
-a working `netplan` configuration that fixes it.
+This repository explains the failure mode, shows how to confirm it with `ip route get`, and
+gives a `netplan` configuration that fixes it (written for this case, not yet applied on a
+real dual-homed host, see Verified).
 
 ## The symptom
 
@@ -172,15 +173,19 @@ Two properties of this particular change make it safe:
 the interface you are *not* fixing, apply the rules for the other one, and verify with
 `ip route get` before writing anything to disk.
 
-**`netplan generate` validates without applying.** It renders the `systemd-networkd` units
-and reports syntax errors while leaving the running configuration untouched:
+**Use `netplan try`, not a blind `netplan apply`.** `netplan generate` only renders the
+`systemd-networkd` units and reports syntax errors; it does not tell you whether the routes
+work. `netplan try` applies the config and rolls it back by itself unless you confirm within
+the timeout, so a mistake on the link you are connected through costs you a timeout, not the
+server:
 
 ```console
 netplan generate && ls /run/systemd/network/
+netplan try --timeout 60
 ```
 
-That turns a scheduled reboot into the test, instead of gambling on `netplan apply` over the
-link being reconfigured. If the config is wrong, the machine comes back on the old one.
+Do not reboot into a config that has only been through `netplan generate`: a reboot applies
+whatever is in `/etc/netplan`, wrong or not.
 
 ## The companion failure: addresses that do not survive reboot
 
@@ -218,17 +223,6 @@ Two details worth keeping:
   name, the standard way to suppress a unit file you do not own, without touching the
   initramfs.
 
-## Why it is worth writing down
-
-Both halves of this failure share a property: the evidence points somewhere other than the
-cause. Asymmetric routing looks like a firewall or a port-forwarding mistake, and gets
-diagnosed by staring at `sshd`. Disappearing addresses look like a broken static
-configuration, when the static configuration is fine and something else is overwriting it.
-
-Neither is exotic. Any host with a management interface and a service interface can land in
-the first one, and any Ubuntu host installed with both network managers active can land in
-the second.
-
 ## Verified
 
 | Check | Result |
@@ -238,7 +232,7 @@ the second.
 | Script with an address the host does not have | `NO ROUTE`, exit code 1 |
 | GitHub Actions (`ci`) | repeats the checks above on an Ubuntu runner |
 
-Not verified: the netplan example on a real dual-homed host (`netplan generate` was not run), and the port-forward scenario end to end. The script cannot show a real asymmetric case on a single-interface machine.
+Not verified: the netplan example on a real dual-homed host (`netplan generate` was not run), and the port-forward scenario end to end. The script cannot show a real asymmetric case on a single-interface machine. The section on addresses that do not survive reboot describes one node as I saw it; its commands are not tested in CI.
 
 ## Limitations
 
